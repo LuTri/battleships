@@ -1,6 +1,11 @@
 ﻿#include <cstdio>
 #include "screen.hpp"
+
+#ifndef LINUX
 #include "curses.h"
+#else
+#include <ncurses.h>
+#endif
 
 MainScreen* MainScreen::INSTANCE = 0;
 
@@ -107,27 +112,27 @@ void BattleScreen::DrawTable(void) {
       wmove((WINDOW*)_this_window, offset_y - 1 + i, offset_x - 1);
       for (int j = 0; j < 61; j++) {
          if (j == 0 && i == 0)
-            put_game_symbol(201); // top-left corner
+            put_game_symbol(TL_CORNER); // top-left corner
          else if (j == 60 && i == 0)
-            put_game_symbol(187); // top-right corner
+            put_game_symbol(TR_CORNER); // top-right corner
          else if (j == 0 && i == 40)
-            put_game_symbol(200); // bottom-left corner
+            put_game_symbol(BL_CORNER); // bottom-left corner
          else if (j == 60 && i == 40)
-            put_game_symbol(188); // bottom-right corner
+            put_game_symbol(BR_CORNER); // bottom-right corner
          else if (j % 6 == 0 && i == 0)
-            put_game_symbol(203); // downward T-thingy
+            put_game_symbol(D_TTHINGY); // downward T-thingy
          else if (j % 6 == 0 && i == 40)
-            put_game_symbol(202); // upward T-thingy
+            put_game_symbol(U_TTHINGY); // upward T-thingy
          else if (j == 0 && i % 4 == 0)
-            put_game_symbol(204); // rightward T-thingy
+            put_game_symbol(R_TTHINGY); // rightward T-thingy
          else if (j == 60 && i % 4 == 0)
-            put_game_symbol(185); // leftward T-thingy
+            put_game_symbol(L_TTHINGY); // leftward T-thingy
          else if (j % 6 != 0 && i % 4 == 0)
-            put_game_symbol(205); // horizontal double line
+            put_game_symbol(H_DOUBLEL); // horizontal double line
          else if (j % 6 == 0 && i % 4 != 0)
-            put_game_symbol(186); // vertical double line
+            put_game_symbol(V_DOUBLEL); // vertical double line
          else if (j % 6 == 0 && i % 4 == 0)
-            put_game_symbol(206); // cross thingy
+            put_game_symbol(D_CROSS); // cross thingy
          else
             put_game_symbol(' ');
          }

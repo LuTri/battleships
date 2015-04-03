@@ -26,7 +26,7 @@ Coord ShipSet::GetNextValid(Ship& ship) {
 
 void ShipSet::Positioning(MainScreen& mainscreen) {
    int idx;
-   char input = 0;
+   int input = 0;
    for (idx = 0; idx < 10; idx++) {
       Screen& status = mainscreen.GetStatusScreen();
       input = 0;
@@ -51,14 +51,14 @@ void ShipSet::Positioning(MainScreen& mainscreen) {
 
       status.Refresh();
 
-      while (input != 13) {
+      while (input != BTN_RETURN) {
          input = mainscreen.GetMyTable().handle_input();
 
          switch (input) {
             case 'r':
                _set[idx]->Erase(mainscreen.GetMyTable());
                _set[idx]->Rotate();
-               _set[idx]->Move(GetNextValid(*_set[idx]));
+               //_set[idx]->Move(GetNextValid(*_set[idx]));
                _set[idx]->Draw(mainscreen.GetMyTable());
                break;
             case BTN_DOWN:
@@ -67,7 +67,7 @@ void ShipSet::Positioning(MainScreen& mainscreen) {
             case BTN_RIGHT:
                _set[idx]->Erase(mainscreen.GetMyTable());
                _set[idx]->Move(input);
-               _set[idx]->Move(GetNextValid(*_set[idx]));
+               //_set[idx]->Move(GetNextValid(*_set[idx]));
                _set[idx]->Draw(mainscreen.GetMyTable());
                break;
             default:

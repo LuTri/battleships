@@ -5,14 +5,48 @@
 #include <string>
 #include <iostream>
 
-
 #define BTN_DOWN 2
 #define BTN_UP 3
 
 #define BTN_LEFT 4
 #define BTN_RIGHT 5
 
+#ifndef LINUX
+#define BTN_RETURN 13
+#else
+#define BTN_RETURN 10
+#endif
+
 #define _CRT_SECURE_NO_WARNINGS
+
+
+#ifndef LINUX
+// Windows Borders
+#define TL_CORNER 201
+#define TR_CORNER 187
+#define BL_CORNER 200
+#define BR_CORNER 188
+#define D_TTHINGY 203
+#define U_TTHINGY 202
+#define R_TTHINGY 204
+#define L_TTHINGY 185
+#define H_DOUBLEL 205
+#define V_DOUBLEL 186
+#define D_CROSS   206
+#else
+// Linux Borders
+#define TL_CORNER '+'
+#define TR_CORNER '+'
+#define BL_CORNER '+'
+#define BR_CORNER '+'
+#define D_TTHINGY '+'
+#define U_TTHINGY '+'
+#define R_TTHINGY '+'
+#define L_TTHINGY '+'
+#define H_DOUBLEL '-'
+#define V_DOUBLEL '|'
+#define D_CROSS   '+'
+#endif
 
 using namespace std;
 
