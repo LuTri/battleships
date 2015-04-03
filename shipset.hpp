@@ -9,7 +9,10 @@ private:
 public:
    void Positioning(MainScreen& mainscreen);
 
-   Coord GetNextValid(Ship& ship);
+   Coord GetNextValid(Ship& ship, bool* success, char direction);
+
+   bool Collision(void);
+   bool Collision(Coord point);
 
    ShipSet(void);
    ~ShipSet(void);

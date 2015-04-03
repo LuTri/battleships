@@ -29,6 +29,7 @@ public:
    void Move(char dir);
 
    void SetAzimut(int azi);
+   Coord* Ship::GetPoints(int* size);
 
    void Rotate(void);
    const Coord& GetPosition(void);

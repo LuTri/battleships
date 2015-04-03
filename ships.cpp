@@ -44,9 +44,9 @@ void Ship::Move(char dir) {
 
    /* considering size */
    if (_azimut == 0 && x > 10 - _size)
-      x = 0 + _size * (dir == BTN_LEFT);
+      x = 0 + (10 * (dir == BTN_LEFT) - _size * (dir == BTN_LEFT));
    if (_azimut == 1 && y > 10 - _size)
-      y = 0 + _size * (dir == BTN_UP);
+      y = 0 + (10 * (dir == BTN_UP) - _size * (dir == BTN_UP));
 
    position.x = x;
    position.y = y;
@@ -56,12 +56,31 @@ void Ship::SetAzimut(int azi) {
    _azimut = azi;
 }
 
-void Ship::Draw(BattleScreen& screen, char symbol) {
-   for (int i = 0; i < _size; i++) {
-      screen.PutC(symbol,
-         position.x + i * (_azimut == 0),
-         position.y + i * (_azimut == 1));
+Coord* Ship::GetPoints(int* size) {
+   Coord* points = new Coord[_size];
+   *size = _size;
+
+   for (int idx = 0; idx < _size; idx++) {
+      points[idx].x = position.x + idx * (_azimut == 0);
+      points[idx].y = position.y + idx * (_azimut == 1); 
    }
+   
+   return points;
+}
+
+void Ship::Draw(BattleScreen& screen, char symbol) {
+   Coord* positions;
+   int size;
+
+   positions = GetPoints(&size);
+
+   for (int i = 0; i < size; i++) {
+      screen.PutC(symbol,
+         positions[i].x,
+         positions[i].y);
+   }
+
+   delete[] positions;
    screen.Refresh();
 }
 
