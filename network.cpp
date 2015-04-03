@@ -1,23 +1,43 @@
 #include "network.hpp"
+#include <exception>
 
-Server Server::INSTANCE;
+Network* Network::INSTANCE = 0;
 
-Client Client::INSTANCE;
+bool Network::TYPE_SERVER = false;
 
 /* Server / Cient Singletons */
 
-Client::Client(void) {}
-Client& Client::GetClient(void) {
-   return INSTANCE;
+Client* Client::GetClient(void) {
+   if (INSTANCE == 0) {
+      INSTANCE = new Client();
+   }
+   if (TYPE_SERVER)
+      throw std::logic_error("Already started as Server!");
+   return (Client*)INSTANCE;
 }
 
-Server::Server(void) {}
-Server& Server::GetServer(void) {
-   return INSTANCE;
+Server::Server(void) {
+   TYPE_SERVER = true;
+}
+
+Server* Server::GetServer(void) {
+   if (INSTANCE == 0) {
+      INSTANCE = new Server();
+   }
+   if (TYPE_SERVER == false)
+      throw std::logic_error("Already started as Client!");
+   return (Server*)INSTANCE;
 }
 
 /* Network Implementation */
 
+Network::Network(void) {
+#ifndef LINUX
+   _wsa = 0;
+#endif
+}
+
+#ifndef LINUX
 Network::~Network(void) {
    if (_wsa) {
       closesocket(_socket);
@@ -26,20 +46,37 @@ Network::~Network(void) {
    }
 }
 
+#else
+Network::~Network(void) {
+   close(_socket);
+}
+#endif
+
 bool Network::Startup(void) {
+#ifndef LINUX
    _wsa = new WSADATA;
    int iRet = WSAStartup(MAKEWORD(2, 2), _wsa);
 
    return iRet == 0;
+#else
+   return true;
+#endif
 }
 
+#ifndef LINUX
 bool Network::MakeSocket(int PROTOCOL, SOCKET* sock) {
+#else
+bool Network::MakeSocket(int PROTOCOL, int* sock) {
+#endif
    *sock = socket(PROTOCOL, SOCK_STREAM, IPPROTO_TCP);
    return *sock != INVALID_SOCKET;
 }
 
 int Network::LastError(void) {
+#ifndef LINUX
    return WSAGetLastError();
+#endif
+	return 0;
 }
 
 bool Network::Send(string data) {
@@ -49,6 +86,7 @@ bool Network::Send(string data) {
 bool Network::Receive(string& data) {
    int received;
    char buff[2000];
+
    if((received = recv(_socket, buff, 2000, 0)) == SOCKET_ERROR) {
       data = "";
       return false;
@@ -64,36 +102,52 @@ bool Network::Receive(string& data) {
 
 Client::Client(void) {
    started = false;
+   TYPE_SERVER = false;
+}
+
+Client::~Client(void) {
+   INSTANCE = 0;
 }
 
 bool Client::Connect(string address, int port) {
    if (!started) {
+#ifndef LINUX
       if (!(Startup()))
          return false;
+#endif
 
       if (!(MakeSocket(AF_INET, &_socket)))
          return false;
 
+
+      _server.sin_addr.s_addr = inet_addr(address.c_str());
+      _server.sin_family = AF_INET;
+      _server.sin_port = htons(port);
+
       started = true;
    }
-
-   _server.sin_addr.s_addr = inet_addr(address.c_str());
-   _server.sin_family = AF_INET;
-   _server.sin_port = htons(port);
-
    return connect(_socket , (struct sockaddr *)&_server , sizeof(_server)) >= 0;
 }
 
 /* Server Implementation */
 
 Server::~Server(void) {
+#ifndef LINUX
    closesocket(_listensocket);
+#else
+   close(_listensocket);
+#endif
+   INSTANCE = 0;
 }
 
 bool Server::AwaitConnection(int port) {
+#ifndef LINUX
    int c;
    if (!(Startup()))
       return false;
+#else
+	socklen_t c;
+#endif
 
    if (!(MakeSocket(PF_INET, &_listensocket)))
       return false;
