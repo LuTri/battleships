@@ -3,7 +3,7 @@ CFLAGS=-DLINUX
 LDFLAGS=-lncurses
 OUT=battleships
 
-OBJ = main.o ships.o shipset.o screen.o positioning.o keyconf.o
+OBJ = main.o ships.o shipset.o screen.o positioning.o keyconf.o network.o
 
 all: $(OBJ)
 	$(GCC) -o $(OUT) $(OBJ) $(LDFLAGS)
