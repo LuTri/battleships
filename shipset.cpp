@@ -1,4 +1,5 @@
 #include "shipset.hpp"
+#include "keyconf.hpp"
 
 ShipSet::ShipSet(void) {
    for (int i = 0; i < 10; i++) {
@@ -50,14 +51,14 @@ Coord ShipSet::GetNextValid(Ship& ship, bool* success, char direction) {
       while(Collision()) {
          if (cnt % 10 == 0 && cnt != 0) {
             char newdir;
-            if (direction == BTN_UP)
-               newdir = BTN_RIGHT;
-            else if (direction == BTN_RIGHT)
-               newdir = BTN_DOWN;
-            else if (direction == BTN_DOWN)
-               newdir = BTN_LEFT;
+            if (direction == Keyconf::KEYCONF[BTN_UP])
+               newdir = Keyconf::KEYCONF[BTN_RIGHT];
+            else if (direction == Keyconf::KEYCONF[BTN_RIGHT])
+               newdir = Keyconf::KEYCONF[BTN_DOWN];
+            else if (direction == Keyconf::KEYCONF[BTN_DOWN])
+               newdir = Keyconf::KEYCONF[BTN_LEFT];
             else
-               newdir = BTN_UP;
+               newdir = Keyconf::KEYCONF[BTN_UP];
             ship.Move(newdir);
          } else {
             ship.Move(direction);
@@ -98,31 +99,23 @@ void ShipSet::Positioning(MainScreen& mainscreen) {
 
       status.Refresh();
 
-      _set[idx]->Move(GetNextValid(*_set[idx], &success, BTN_RIGHT));
+      _set[idx]->Move(GetNextValid(*_set[idx], &success, Keyconf::KEYCONF[BTN_RIGHT]));
       _set[idx]->Draw(mainscreen.GetMyTable());
 
 
-      while (input != BTN_RETURN) {
+      while (input != Keyconf::KEYCONF[BTN_RETURN]) {
          input = mainscreen.GetMyTable().handle_input();
 
-         switch (input) {
-            case 'r':
-               _set[idx]->Erase(mainscreen.GetMyTable());
-               _set[idx]->Rotate();
-               _set[idx]->Move(GetNextValid(*_set[idx], &success, input));
-               _set[idx]->Draw(mainscreen.GetMyTable());
-               break;
-            case BTN_DOWN:
-            case BTN_UP:
-            case BTN_LEFT:
-            case BTN_RIGHT:
-               _set[idx]->Erase(mainscreen.GetMyTable());
-               _set[idx]->Move(input);
-               _set[idx]->Move(GetNextValid(*_set[idx], &success, input));
-               _set[idx]->Draw(mainscreen.GetMyTable());
-               break;
-            default:
-               break;
+         if (input == Keyconf::KEYCONF[BTN_ROTATE]) {
+            _set[idx]->Erase(mainscreen.GetMyTable());
+            _set[idx]->Rotate();
+            _set[idx]->Move(GetNextValid(*_set[idx], &success, input));
+            _set[idx]->Draw(mainscreen.GetMyTable());
+         } else if (input == Keyconf::KEYCONF[BTN_DOWN] || input == Keyconf::KEYCONF[BTN_UP] || input == Keyconf::KEYCONF[BTN_LEFT] || input == Keyconf::KEYCONF[BTN_RIGHT]) {
+            _set[idx]->Erase(mainscreen.GetMyTable());
+            _set[idx]->Move(input);
+            _set[idx]->Move(GetNextValid(*_set[idx], &success, input));
+            _set[idx]->Draw(mainscreen.GetMyTable());
          }
       }
    }

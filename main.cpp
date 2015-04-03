@@ -2,16 +2,19 @@
 #include <cstdlib>
 #include "screen.hpp"
 #include "shipset.hpp"
+#include "keyconf.hpp"
 
 using namespace std;
-
-void PositioningLoop(Screen* screen, Ship *ships[10], MainScreen& debug) {
-}
 
 int main(void) {
 
    char cInput;
+
    MainScreen MyMainScreen = MainScreen::GetInstance();
+
+   if(!Keyconf::KEYCONF.load()) {
+      Keyconf::KEYCONF.config(MyMainScreen.GetStatusScreen());
+   }
 
    ShipSet myset = ShipSet();
    ShipSet enemyset = ShipSet();

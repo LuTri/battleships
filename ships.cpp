@@ -1,4 +1,5 @@
 #include "ships.hpp"
+#include "keyconf.hpp"
 
 int Battleship::_count = 0;
 int Cruiser::_count = 0;
@@ -39,14 +40,14 @@ void Ship::Move(char dir) {
    int x = position.x;
    int y = position.y;
    /* size-less positioning */
-   x = (10 + (x + 1 * (dir == BTN_RIGHT) + -1 * (dir == BTN_LEFT))) % 10;
-   y = (10 + (y + 1 * (dir == BTN_DOWN) + -1 * (dir == BTN_UP))) % 10;
+   x = (10 + (x + 1 * (dir == Keyconf::KEYCONF[BTN_RIGHT]) + -1 * (dir == Keyconf::KEYCONF[BTN_LEFT]))) % 10;
+   y = (10 + (y + 1 * (dir == Keyconf::KEYCONF[BTN_DOWN]) + -1 * (dir == Keyconf::KEYCONF[BTN_UP]))) % 10;
 
    /* considering size */
    if (_azimut == 0 && x > 10 - _size)
-      x = 0 + (10 * (dir == BTN_LEFT) - _size * (dir == BTN_LEFT));
+      x = 0 + (10 * (dir == Keyconf::KEYCONF[BTN_LEFT]) - _size * (dir == Keyconf::KEYCONF[BTN_LEFT]));
    if (_azimut == 1 && y > 10 - _size)
-      y = 0 + (10 * (dir == BTN_UP) - _size * (dir == BTN_UP));
+      y = 0 + (10 * (dir == Keyconf::KEYCONF[BTN_UP]) - _size * (dir == Keyconf::KEYCONF[BTN_UP]));
 
    position.x = x;
    position.y = y;

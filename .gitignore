@@ -8,3 +8,4 @@ ipch/
 *.o
 battleships
 *.swp
+*.keys
