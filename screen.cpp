@@ -52,6 +52,30 @@ char Screen::handle_input(void) {
    return wgetch((WINDOW*)_this_window);
 }
 
+void Screen::ShowCursor(void) {
+   curs_set(2);
+}
+
+void Screen::HideCursor(void) {
+   curs_set(0);
+}
+
+void Screen::MoveCursor(Coord pos) {
+   wmove((WINDOW*)_this_window,pos.y,pos.x);
+}
+
+string Screen::ReadString(void) {
+   char buff[200];
+   echo();
+   curs_set(1);
+   getstr(buff);
+   curs_set(0);
+   noecho();
+   return string(buff);
+}
+
+/* Mainscreen implementation */
+
 MainScreen::MainScreen(void){
    initscr();
    raw();
@@ -62,6 +86,11 @@ MainScreen::MainScreen(void){
    _this_window = (void*)stdscr;
    Refresh();
 
+   mytable = 0;
+   enemytable = 0;
+}
+
+void MainScreen::InitGameMode(void) {
     mytable = new BattleScreen(0,0);
     enemytable = new BattleScreen(66,0);
     statusscreen = new Screen(2,132,0,45);
@@ -69,18 +98,63 @@ MainScreen::MainScreen(void){
 
 MainScreen::~MainScreen(void) {
    endwin();
-   delete mytable;
-   delete enemytable;
+   if (mytable)
+      delete mytable;
+   if (enemytable)
+      delete enemytable;
    MainScreen::INSTANCE = 0;
 }
 
-MainScreen& MainScreen::GetInstance(void) {
+MainScreen* MainScreen::GetInstance(void) {
    if (MainScreen::INSTANCE == 0) {
       MainScreen::INSTANCE = new MainScreen();
    }
 
-   return *(MainScreen::INSTANCE);
+   return MainScreen::INSTANCE;
 }
+
+Coord MainScreen::GetMaxSize(void) {
+   CheckSufficientSize();
+
+   return Coord(_max_x, _max_y);
+}
+
+bool MainScreen::CheckSufficientSize(void) {
+   getmaxyx((WINDOW*)_this_window, _max_y, _max_x);
+
+   if (_max_x < NEEDED_WIDTH || _max_y < NEEDED_HEIGHT) {
+      (*this) << "ERROR: Ihre Konsole ist zu klein.\n" <<\
+         "Sie brauchen mindestens eine Groesse von " << NEEDED_WIDTH << " mal " << NEEDED_HEIGHT << ".\n" <<\
+         "Bitte vergroessern sie Ihre Konsole und starten sie das Programm neu!.";
+
+      Refresh();
+      return false;
+   }
+   return true;
+}
+
+int MainScreen::Centered(string value) {
+   int size = value.length();
+   int y,x;
+
+   getyx((WINDOW*)_this_window,y,x);
+
+   x = _max_x / 2 - size / 2;
+
+   mvwprintw((WINDOW*)_this_window, y+1, x, value.c_str());
+
+   return x;
+}
+
+void MainScreen::Aligned(string value, int align) {
+   int y,x;
+
+   getyx((WINDOW*)_this_window,y,x);
+
+   mvwprintw((WINDOW*)_this_window, y, align, value.c_str());
+}
+
+/* Battlescreen implementation */
 
 BattleScreen& MainScreen::GetMyTable(void) {
    return *mytable;

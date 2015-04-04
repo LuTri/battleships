@@ -4,6 +4,10 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include "positioning.hpp"
+
+#define NEEDED_WIDTH 132
+#define NEEDED_HEIGHT 60
 
 #ifndef LINUX
 // Windows Borders
@@ -59,8 +63,15 @@ public:
    Screen& operator<<(string val);
    Screen& operator<<(int val);
 
+   void ShowCursor(void);
+   void HideCursor(void);
+
+   void MoveCursor(Coord pos);
+
    void Refresh(void);
    void Clear(void);
+
+   string ReadString(void);
 };
 
 
@@ -82,6 +93,9 @@ private:
    BattleScreen *enemytable;
    Screen *statusscreen;
 
+   int _max_x;
+   int _max_y;
+
    static MainScreen* INSTANCE;
    MainScreen();
 public:
@@ -90,7 +104,15 @@ public:
    BattleScreen& GetEnemyTable(void);
    Screen& GetStatusScreen(void);
 
-   static MainScreen& GetInstance(void);
+   static MainScreen* GetInstance(void);
+
+   void InitGameMode(void);
+
+   Coord GetMaxSize(void);
+   bool CheckSufficientSize(void);
+
+   int Centered(string value);
+   void Aligned(string value, int align);
 
    ~MainScreen();
 };

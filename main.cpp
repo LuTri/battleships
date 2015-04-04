@@ -1,26 +1,13 @@
 #include <iostream>
 #include <cstdlib>
-#include "screen.hpp"
-#include "shipset.hpp"
-#include "keyconf.hpp"
+#include "game.hpp"
 
 using namespace std;
 
 int main(void) {
+   Game& the_game = Game::GetGame();
 
-   char cInput;
+   the_game.Run();
 
-   MainScreen MyMainScreen = MainScreen::GetInstance();
-
-   if(!Keyconf::KEYCONF.load()) {
-      Keyconf::KEYCONF.config(MyMainScreen.GetStatusScreen());
-   }
-
-   ShipSet myset = ShipSet();
-   ShipSet enemyset = ShipSet();
-
-   myset.Positioning(MyMainScreen);
-
-   cInput = MyMainScreen.handle_input();
    return 0;
 }
