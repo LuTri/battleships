@@ -7,6 +7,13 @@ Game::Game(void) {
    _network = 0;
 
    _ship_set = 0;
+
+   for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 10; j++) {
+         _my_table[i][j] = 0;
+         _enemy_table[i][j] = 0;
+      }
+   }
 }
 
 Game::~Game(void) {
@@ -57,6 +64,15 @@ void Game::Run(void) {
 
       if (connection) {
          Play();
+         if (_network) {
+            if (_is_server) {
+               delete (Server*)_network;
+               _network = 0;
+            } else {
+               delete (Client*)_network;
+               _network = 0;
+            }
+         }
       }
    } while (choice != EXIT_GAME);
 }
@@ -87,9 +103,7 @@ int Game::Menu(Coord boundaries) {
 
    display.Refresh();
 
-   display.ShowCursor();
-
-   display.MoveCursor(Coord(alignment + 2,cursor_pos + 10));
+   display.MoveCursor(Coord(alignment + 2,cursor_pos + 10),true);
 
    do {
       input = display.handle_input();
@@ -102,10 +116,9 @@ int Game::Menu(Coord boundaries) {
          cursor_pos = ++cursor_pos % 4;
       }
 
-      display.MoveCursor(Coord(alignment + 2,cursor_pos + 10));
+      display.MoveCursor(Coord(alignment + 2,cursor_pos + 10),true);
    } while (input != Keyconf::KEYCONF[BTN_RETURN]);
 
-   display.HideCursor();
    return cursor_pos;
 }
 
@@ -113,6 +126,7 @@ bool Game::RunServer(void) {
    bool connected;
    MainScreen& display = (*_main_screen);
    try {
+      _is_server = true;
       _network = Server::GetServer();
 
       display.Clear();
@@ -135,12 +149,16 @@ bool Game::RunServer(void) {
 }
 
 bool Game::RunClient(void) {
+#ifdef DEBUG
+   return true;
+#endif
    int try_counter = 0;
    bool connected = false;
    string address;
    MainScreen& display = (*_main_screen);
 
    try {
+      _is_server = false;
       _network = Client::GetClient();
       display.Clear();
       display << "Bitte die Addresse eingeben:\n";
@@ -164,9 +182,103 @@ bool Game::RunClient(void) {
    return true;
 }
 
+char Game::QueryHit(Coord pos) {
+   return _ship_set->Hit(pos);
+}
+
+void Game::InitNew(void) {
+   if (_ship_set) {
+      delete _ship_set;
+   }
+
+
+   _ship_set = new ShipSet(&_my_table);
+   _my_table.Clear();
+   _enemy_table.Clear();
+}
+
 void Game::Play(void) {
-   _ship_set = new ShipSet();
+   int hit = 0;
+   Coord target(0,0);
+   char state;
+
+   InitNew();
+
+   _main_screen->Clear();
+   _main_screen->Refresh();
    _main_screen->InitGameMode();
 
    _ship_set->Positioning((*_main_screen));
+   while (hit < 100) {
+      target = HitLoop(target);
+      if ((state = QueryHit(target)) == STATE_MISS) {
+         _enemy_table[target.y][target.x] = STATE_MISS;
+      } else {
+         _enemy_table[target.y][target.x] = STATE_HIT;
+      }
+      hit++;
+      RenderState();
+      _main_screen->GetStatusScreen().Clear();
+      _main_screen->GetStatusScreen() << hit;
+      _main_screen->GetStatusScreen().Refresh();
+   }
+}
+
+Coord Game::HitLoop(Coord lastcursor) {
+   BattleScreen& display = _main_screen->GetEnemyTable();
+   char input;
+
+   display.MoveCursorRel(lastcursor);
+
+   do {
+      input = display.handle_input();
+      lastcursor.x = (10 + (lastcursor.x +\
+         1 * (input == Keyconf::KEYCONF[BTN_RIGHT]) +\
+         -1 * (input == Keyconf::KEYCONF[BTN_LEFT])
+         )) % 10;
+
+      lastcursor.y = (10 + (lastcursor.y +\
+         1 * (input == Keyconf::KEYCONF[BTN_DOWN]) +\
+         -1 * (input == Keyconf::KEYCONF[BTN_UP])
+         )) % 10;
+
+      display.MoveCursorRel(lastcursor);
+
+   } while (input != Keyconf::KEYCONF[BTN_RETURN] || _enemy_table[lastcursor.y][lastcursor.x] != 0);
+
+   return lastcursor;
+}
+
+void Game::RenderState(void) {
+   Table<char> tmp_table;
+
+   _ship_set->FillTable(&tmp_table);
+
+   BattleScreen& enemy_display = _main_screen->GetEnemyTable();
+   BattleScreen& my_display = _main_screen->GetMyTable();
+
+   for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 10; j++) {
+
+         /* render enemy table */
+         if (_enemy_table[i][j] == STATE_MISS)
+            enemy_display.PutC(TARGET_MISS,j,i);
+         else if (_enemy_table[i][j] == STATE_HIT) {
+            enemy_display.PutC(TARGET_HIT,j,i);
+         }
+
+         /* render my table */
+         if (tmp_table[i][j] == SHIP_SYMBOL) {
+            if (_my_table[i][j] == STATE_HIT)
+               my_display.PutC(TARGET_HIT,j,i);
+            else
+               my_display.PutC(SHIP_SYMBOL,j,i);
+         } else if (_my_table[i][j] == STATE_MISS) {
+            my_display.PutC(TARGET_MISS,j,i);
+         }
+      }
+   }
+
+   enemy_display.Refresh();
+   my_display.Refresh();
 }

@@ -18,6 +18,8 @@ protected:
    int _azimut;
    Coord position;
 
+   int _hit;
+
    virtual void _set_size() = 0;
 
 public:
@@ -33,6 +35,8 @@ public:
 
    void Rotate(void);
    const Coord& GetPosition(void);
+
+   bool HitDestruct(void);
 
    Ship(void);
 };

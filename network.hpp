@@ -35,6 +35,10 @@ protected:
 
    static bool TYPE_SERVER;
 
+   bool _connected;
+
+   void _Cleanup(void);
+
 #ifndef LINUX
    SOCKET _socket;
 #else
@@ -55,6 +59,8 @@ public:
 
    bool Send(string data);
    bool Receive(string& data);
+
+   bool isConnected(void); 
 };
 
 class Client: public Network {

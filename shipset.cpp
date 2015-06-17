@@ -1,10 +1,19 @@
 #include "shipset.hpp"
 #include "keyconf.hpp"
 
-ShipSet::ShipSet(void) {
+ShipSet::ShipSet(Table<char>* display_table) {
+   done_filling = false;
    for (int i = 0; i < 10; i++) {
       _set[i] = NULL;
    }
+
+   for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 10; j++) {
+         table[i][j] = 0;
+      }
+   }
+
+   _display_table = display_table;
 }
 
 ShipSet::~ShipSet(void) {
@@ -19,7 +28,8 @@ bool ShipSet::Collision(void) {
 
    bool collision = false;
 
-   bool table[10][10] = { false };
+   Table<bool> table;
+
    while ((act_ship = _set[idx]) != NULL && idx < 10 && !collision) {
       int size;
       Coord* points;
@@ -119,4 +129,44 @@ void ShipSet::Positioning(MainScreen& mainscreen) {
          }
       }
    }
+}
+
+void ShipSet::FillTable(Table<char>* target_table) {
+   if (! done_filling || target_table != 0) {
+
+      for (int i = 0; i < 10; i++) {
+         if (_set[i]) {
+            int size;
+            Coord *pos = _set[i]->GetPoints(&size);
+
+            for (int j = 0; j < size; j++) {
+               if (target_table == 0)
+                  table[pos[j].y][pos[j].x] = _set[i];
+               else
+                  (*target_table)[pos[j].y][pos[j].x] = SHIP_SYMBOL;
+            }
+
+            delete[] pos;
+         }
+      }
+
+      if (target_table == 0)
+         done_filling = true;
+   }
+}
+
+char ShipSet::Hit(Coord pos) {
+   FillTable();
+   Ship* hit_ship = table[pos.y][pos.x];
+
+   if (hit_ship) {
+      (*_display_table)[pos.y][pos.x] = STATE_HIT;
+      if (hit_ship->HitDestruct()) {
+         return STATE_DESTRUCTION;
+      }
+      return STATE_HIT;
+   }
+
+   (*_display_table)[pos.y][pos.x] = STATE_MISS;
+   return STATE_MISS;
 }

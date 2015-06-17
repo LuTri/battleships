@@ -55,6 +55,7 @@ protected:
    ~Screen(void);
    void printw(string val, bool refresh);
 
+   Coord _last_curs;
 public:
    Screen(int height, int width, int x, int y);
 
@@ -66,7 +67,7 @@ public:
    void ShowCursor(void);
    void HideCursor(void);
 
-   void MoveCursor(Coord pos);
+   void MoveCursor(Coord pos, bool show_x = false);
 
    void Refresh(void);
    void Clear(void);
@@ -85,6 +86,9 @@ public:
    BattleScreen(int x, int y);
    void Init(void);
    void PutC(char val, int x, int y);
+
+   Coord GetRelCoord(Coord abs);
+   void MoveCursorRel(Coord abs);
 };
 
 class MainScreen: public Screen {
@@ -119,5 +123,3 @@ public:
 
 
 #endif
-
-#define _CRT_SECURE_NO_WARNINGS

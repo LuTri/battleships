@@ -12,7 +12,10 @@ MainScreen* MainScreen::INSTANCE = 0;
 const int BattleScreen::offset_x = 6;
 const int BattleScreen::offset_y = 4;
 
-Screen::Screen(void) {}
+Screen::Screen(void) {
+   _last_curs.x = -1;
+   _last_curs.y = -1;
+}
 
 Screen::~Screen(void) {}
 
@@ -60,8 +63,16 @@ void Screen::HideCursor(void) {
    curs_set(0);
 }
 
-void Screen::MoveCursor(Coord pos) {
+void Screen::MoveCursor(Coord pos, bool show_x) {
    wmove((WINDOW*)_this_window,pos.y,pos.x);
+   if (show_x) {
+      mvaddch(pos.y,pos.x, 'X');
+      if (_last_curs.x != -1 && _last_curs.y != -1) {
+         mvaddch(_last_curs.y,_last_curs.x,' ');
+      }
+      _last_curs = pos;
+   }
+   Refresh();
 }
 
 string Screen::ReadString(void) {
@@ -93,7 +104,7 @@ MainScreen::MainScreen(void){
 void MainScreen::InitGameMode(void) {
     mytable = new BattleScreen(0,0);
     enemytable = new BattleScreen(66,0);
-    statusscreen = new Screen(2,132,0,45);
+    statusscreen = new Screen(10,132,0,45);
 }
 
 MainScreen::~MainScreen(void) {
@@ -215,9 +226,20 @@ void BattleScreen::DrawTable(void) {
 }
 
 void BattleScreen::PutC(char val, int x, int y) {
-   int res_x = offset_x + offset_x / 2 + x * offset_x - 1;
-   int res_y = offset_y + offset_y / 2 + y * offset_y - 1;
-   mvwaddch((WINDOW*)_this_window,res_y,res_x,val);
+   Coord rel_coord = GetRelCoord(Coord(x,y));
+   mvwaddch((WINDOW*)_this_window, rel_coord.y, rel_coord.x, val);
+}
+
+Coord BattleScreen::GetRelCoord(Coord abs) {
+   return Coord(
+      offset_x + offset_x / 2 + abs.x * offset_x - 1,
+      offset_y + offset_y / 2 + abs.y * offset_y - 1
+   );
+}
+
+void BattleScreen::MoveCursorRel(Coord abs) {
+   Coord rel_coord = GetRelCoord(abs);
+   wmove((WINDOW*)_this_window, rel_coord.y, rel_coord.x);
 }
 
 void BattleScreen::Init(void) {

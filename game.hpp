@@ -11,8 +11,17 @@
 #define START_CLIENT 0x02
 #define EXIT_GAME 0x03
 
+#define TARGET_HIT 'X'
+#define TARGET_MISS '.'
+
 class Game {
 private:
+
+   bool _is_server;
+
+   Table<char> _my_table;
+   Table<char> _enemy_table;
+
    MainScreen* _main_screen;
    Network* _network;
    ShipSet* _ship_set;
@@ -20,17 +29,27 @@ private:
    static Game INSTANCE;
    Game(void);
 
-public:
-   static Game& GetGame(void);
-
    int Menu(Coord boundaries);
 
    bool RunServer(void);
    bool RunClient(void);
 
+   void Play(void);
+
+   Coord HitLoop(Coord lastcursor);
+   void WaitLoop(void);
+
+   char QueryHit(Coord pos);
+
+   void RenderState(void);
+
+   void InitNew(void);
+
+public:
+   static Game& GetGame(void);
+
    void Run(void);
 
-   void Play(void);
    ~Game();
 };
 

@@ -6,7 +6,10 @@ int Cruiser::_count = 0;
 int Destroyer::_count = 0;
 int Submarine::_count = 0;
 
-Ship::Ship(void) { _azimut = 1; }
+Ship::Ship(void) {
+   _azimut = 1;
+   _hit = 0;
+}
 
 Battleship::Battleship(void):Ship() { _set_size(); }
 
@@ -95,4 +98,8 @@ void Ship::Rotate(void) {
       position.x = _size;
    if (_azimut == 1 && position.y > 10 - _size)
       position.y = _size;
+}
+
+bool Ship::HitDestruct(void) {
+   return ++_hit == _size;
 }

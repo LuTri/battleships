@@ -35,6 +35,7 @@ Network::Network(void) {
 #ifndef LINUX
    _wsa = 0;
 #endif
+   _connected = false;
 }
 
 #ifndef LINUX
@@ -55,9 +56,7 @@ Network::~Network(void) {
 bool Network::Startup(void) {
 #ifndef LINUX
    _wsa = new WSADATA;
-   int iRet = WSAStartup(MAKEWORD(2, 2), _wsa);
-
-   return iRet == 0;
+   return WSAStartup(MAKEWORD(2, 2), _wsa) == 0;
 #else
    return true;
 #endif
@@ -80,7 +79,12 @@ int Network::LastError(void) {
 }
 
 bool Network::Send(string data) {
-   return send(_socket , data.c_str() , data.length(), 0) >= 0;
+   if (send(_socket , data.c_str() , data.length(), 0) >= 0) {
+      return true;
+   } else {
+      _connected = false;
+      return false;
+   }
 }
 
 bool Network::Receive(string& data) {
@@ -90,12 +94,26 @@ bool Network::Receive(string& data) {
    if((received = recv(_socket, buff, 2000, 0)) == SOCKET_ERROR) {
       data = "";
       return false;
+   } else if (received == 0) {
+      data = "";
+      _connected = false;
+      return false;
    }
     
    buff[received] = '\0';
 
    data = string(buff);
    return true;
+}
+
+void Network::_Cleanup(void) {
+#ifndef LINUX
+   WSACleanup();
+#endif
+}
+
+bool Network::isConnected(void) {
+   return _connected;
 }
 
 /* Client Implementation */
@@ -112,12 +130,16 @@ Client::~Client(void) {
 bool Client::Connect(string address, int port) {
    if (!started) {
 #ifndef LINUX
-      if (!(Startup()))
+      if (!(Startup())) {
+         _Cleanup();
          return false;
+      }
 #endif
 
-      if (!(MakeSocket(AF_INET, &_socket)))
+      if (!(MakeSocket(AF_INET, &_socket))) {
+         _Cleanup();
          return false;
+      }
 
 
       _server.sin_addr.s_addr = inet_addr(address.c_str());
@@ -126,7 +148,13 @@ bool Client::Connect(string address, int port) {
 
       started = true;
    }
-   return connect(_socket , (struct sockaddr *)&_server , sizeof(_server)) >= 0;
+   if (connect(_socket , (struct sockaddr *)&_server , sizeof(_server)) >= 0) {
+      _connected = true;
+      return true;
+   } else {
+      _Cleanup();
+      return false;
+   }
 }
 
 /* Server Implementation */
@@ -143,28 +171,37 @@ Server::~Server(void) {
 bool Server::AwaitConnection(int port) {
 #ifndef LINUX
    int c;
-   if (!(Startup()))
+   if (!(Startup())) {
+      _Cleanup();
       return false;
+   }
 #else
 	socklen_t c;
 #endif
 
-   if (!(MakeSocket(PF_INET, &_listensocket)))
+   if (!(MakeSocket(PF_INET, &_listensocket))) {
+      _Cleanup();
       return false;
+   }
 
    _server.sin_family = AF_INET;
    _server.sin_addr.s_addr = INADDR_ANY;
    _server.sin_port = htons(port);
-   if(bind(_listensocket ,(struct sockaddr *)&_server, sizeof(_server)) == SOCKET_ERROR)
+   if(bind(_listensocket ,(struct sockaddr *)&_server, sizeof(_server)) == SOCKET_ERROR) {
+      _Cleanup();
       return false;
+   }
 
    listen(_listensocket , 3);
    c = sizeof(struct sockaddr_in);
    _socket = accept(_listensocket , (struct sockaddr *)&_client, &c);
 
-   if (_socket == INVALID_SOCKET)
+   if (_socket == INVALID_SOCKET) {
+      _Cleanup();
       return false;
+   }
 
+   _connected = true;
    return true;
 }
 
